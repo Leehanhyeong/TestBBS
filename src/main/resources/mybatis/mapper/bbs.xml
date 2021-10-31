@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bbs">
+ 
+ 	<resultMap type="mybatis.vo.BbsVO" id="map1">
+ 		<id property="b_idx" column="b_idx"/>
+ 		<collection property="c_list" ofType="mybatis.vo.CommVO"
+ 			select="commList"  column="b_idx" />
+ 		
+ 		
+ 		
+ 		
+ 	</resultMap>
+ 	 
+ 	 <!-- 특정게시물의 기본키인 b_idx를 받아서 해당게시물에
+ 	 						 부기능 댓글들을 모두 반환 -->
+ 	<select id="commList" parameterType="String" resultType="mybatis.vo.CommVO">
+ 		SELECT * FROM comment_t
+ 		WHERE b_idx = #{b_dix}
+ 	</select>
+ 
+ 	<select id="list" parameterType="Map" resultMap="map1">
+ 		SELECT * FROM (
+ 		SELECT rownum r_num, a.* FROM (
+ 			SELECT * FROM bbs_t
+	 		WHERE status = 0 AND bname = #{bname}
+	 		ORDER BY b_idx DESC
+	 		) a
+	 	) WHERE r_num BETWEEN #{begin} AND #{end}	
+ 	</select>
+ 
+ 	<select id="totalCount" resultType="int" parameterType="String">
+ 		SELECT COUNT(*) FROM bbs_t
+ 		WHERE status = 0 AND bname = #{bname}
+ 	</select>
+ 	
+ 	
+ 	<!-- view -->
+		<!-- 기본키(b_idx_)를 인자로 받아 원글을 검색해 주는 기능 -->
+	<select id="getBbs" parameterType="String" resultMap="map1">
+		SELECT * FROM bbs_t
+		WHERE b_idx = #{no}
+	</select>
+ 	
+ 	<!--  원글을 저장하는 기능 -->
+ 		<insert id="add" parameterType="mybatis.vo.BbsVO">
+		INSERT INTO bbs_t(b_idx, subject, writer, content,
+			file_name, ori_name, pwd, write_date, ip, hit, status, bname)
+		VALUES(bbs_t_seq.NEXTVAL, #{subject}, #{writer}, #{content},
+		#{file_name},#{ori_name},#{pwd}, sysdate, #{ip}, 0, 0, #{bname})
+	
+		
+	</insert>
+ 	
+ 	<!-- 원글 수정하는 기능 -->
+ 	
+ 	<update id="edit" parameterType="mybatis.vo.BbsVO">
+ 	 	UPDATE bbs_t   <!-- bbs_t라는 테이블안에있는  -->
+ 	 	SET subject = #{subject}, <!-- 이걸로 바꿔주세요~ 라는 뜻 -->
+ 	 		content = #{content},
+ 	 		ip = #{ip}
+ 	 		<if test= "file_name != null">
+ 	 			,file_name = #{file_name}
+ 	 		</if>
+ 	 		WHERE b_idx = #{b_idx} AND pwd = #{pwd}  <!-- 기본키랑 비밀번호가같은애만 -->
+ 	
+ 	</update>
+ 	
+ 		<!-- 원글 삭제하는 기능 -->
+ 	<update id="del" parameterType="String">
+ 		UPDATE bbs_t
+ 		SET status = 1
+ 		WHERE b_idx = #{idx}
+ 	</update>
+ 	
+ 	
+</mapper>
